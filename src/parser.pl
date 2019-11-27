@@ -28,6 +28,7 @@
 :- discontiguous parser:disjunctive_rules/6.
 :- discontiguous parser:infer_types/2.
 :- discontiguous parser:infer_types/3.
+:- discontiguous parser:vars_indices/3.
 
 domains(S) :- setof(X, main:domain(X), S).
 
@@ -891,7 +892,10 @@ var_at_index(Functor, Index, Var) :-
            value_at_index(Args, Index, Var).
 
 vars_indices(Vars, Functor, Indices) :-
+             Indices = [H|T], nonvar(H), nonvar(T),
              vars_indices(Vars, [], Functor, Indices).
+
+vars_indices([], _, []).
 
 vars_indices(Vars, Vars, _, []).
 
@@ -900,6 +904,17 @@ vars_indices(Vars, V, Functor, [H|T]) :-
          append(V, [(Var,Var1,H)], V1),
          rename(Var, Var1),
          vars_indices(Vars, V1, Functor, T).
+
+vars_indices(Vars, Functor, Indices) :-
+          Vars = [H|T], nonvar(H), nonvar(T),
+          vars_indices_helper(Vars, Functor, [], Indices).
+
+vars_indices_helper([], _, I, I).
+
+vars_indices_helper([H|T], Functor, I, Indices) :-
+             index_of_var(Functor, H, I1),
+             append(I, [I1], I2),
+             vars_indices_helper(T, Functor, I2, Indices).
 
 flow_var_renamed(Head, Functor, Flow, Renamed) :-
               Functor =.. [Goalid|_],
@@ -1154,13 +1169,14 @@ infer_types([H|T], Ty, Types) :-
           assign_types(Flow, Vars, Ty, Ty1),
           infer_types(T, Ty1, Types).
 
-gen_intermediate_prog(Source, Rulesfmt, Domains, Main, Inputs_n, Graph, Graph1, Flow1, Rulesfinal3, Values, Inputvalues) :-   
+gen_intermediate_prog(Source, Rulesfmt, Domains, Mainid, Inputs_n, Graph, Graph1, Flow1, Rulesfinal3, Values, Inputvalues) :-   
        io:load_source_files([Source], [], S, 0, _), 
        domains(S, Domains),
        inputs(S, Inputs),
        names(S, Names),
        main_pred(S, Main),
        main_pred_arity(Main, S, Arity),
+
        functor_arities(Domains, S, Domains_n),
        functor_arities(Inputs, S, Inputs_n),
        atom_string(Main, Mainstr),
@@ -1192,7 +1208,9 @@ gen_intermediate_prog(Source, Rulesfmt, Domains, Main, Inputs_n, Graph, Graph1, 
        input_values(Inputs_n, Rules, Inputvalues),
        remove_facts(Domains_n, Rulesfinal, Rulesfinal1),
        remove_facts(Inputs_n, Rulesfinal1, Rulesfinal2),
+       assign_domain_types(Domains_n, Values),
        infer_types(Rulesfinal2,_),
+       infertypes_simple(Mainid, Rulesfmt),
        maplist(rewrite_disjunct, Rulesfinal2, Rulesfinal3).
 
     
@@ -1225,4 +1243,39 @@ rewrite_disjunct(Rule, Ruleout) :-
     substitute_disjuncts(Body, Body1),
     Functor =.. [Connective,Body1],
     Ruleout = pred(A, B, Id, Head, Functor,C, D, E, F, G).
+
+:- dynamic domain_type/2.
+
+has_num(Values) :-
+       member(typenum(_), Values).
+
+assign_domain_types([],_).
+
+assign_domain_types(Domain, Values) :-
+         Domain = [H|T],
+         (not(domain_type(H,_)) -> member((H,Vals),Values), (has_num(Vals) -> assert(domain_type(H,typenum)) 
+                                                                            ; assert(domain_type(H,typestr)))
+                                ; true),
+         assign_domain_types(T, Values).
+
+
+vardomain_type(Vardomainfunctor, (Var,Type)) :-
+        Vardomainfunctor =.. [Var,Domain],
+        domain_type(Domain, Type). 
+
+infertypes_simple(Name, Rulesfmt) :-
+      get_rule_by_id(Name, Rulesfmt, Rule),
+      Rule = (Name,Head,_,_,Doms,_,_),
+      functor_vars(Head, Vars), 
+      maplist(vardomain_type, Doms, Vartypes),
+      assign_vartypes(Vars, Head, Vartypes).
+
+
+assign_vartypes([],_,_).
+
+assign_vartypes([H|T],Functor,Vartypes) :-
+        index_of_var(Functor, H, Index),
+        member((H,Type), Vartypes),
+        assert(typeof(Index,Type)),
+        assign_vartypes(T,Functor,Vartypes). 
 
