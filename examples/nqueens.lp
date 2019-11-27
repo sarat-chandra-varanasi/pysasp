@@ -28,7 +28,7 @@ different(I1, J1, I2, J2) :- row(I1), row(I2), col(J1), col(J2), I1 \= I2.
 different(I1, J1, I2, J2) :- row(I1), row(I2), col(J1), col(J2), J1 \= J2.
 
 %Q1 is placed in an position conflicting (attacking) with Q, I, J
-conflict(Q, I, J) :- queen(Q), queen(Q1), Q = Q1, row(I), col(J), row(I1), col(J1), conflict_position(I, J, I1, J1), place(Q, I, J), place(Q1, I1, J1).
+conflict(Q, I, J) :- queen(Q), queen(Q1), Q \= Q1, row(I), col(J), row(I1), col(J1), conflict_position(I, J, I1, J1), place(Q, I, J), place(Q1, I1, J1).
 conflict_position(I1, J1, I2, J2) :- row(I1), row(I2), col(J1), col(J2), J1 \= J2, I1 = I2.
 conflict_position(I1, J1, I2, J2) :- row(I1), row(I2), col(J1), col(J2), I1 \= I2, J1 = J2.	
 conflict_position(I1, J1, I2, J2) :-  row(I1), col(J1), row(I2), col(J2), dom(D1), I1 \= I2, J1 \= J2, diff(I1, I2, D1), diff(J1, J2, D1).
