@@ -26,6 +26,14 @@ Specifications"
 
 Link to full paper: www.utdallas.edu/~gupta/aspsynthesis.pdf
 
+Every program must additionally have the following annotations:
+1. A unique main predicate. If the main predicate name is  "query"
+   then the s(ASP) program must contain the fact "main(query)."
+2. Every variable in the program must be associated with a domain.
+   Every domain must be annotated using the domain predicate.
+   If the s(ASP) program uses a domain, say "num" then it should
+   contain the fact "domain(num)". 
+
 
 Parser for PySasp is based on the s(ASP) parser. s(ASP) 
 is a Predicate Answer Set Programs that produces stable models
