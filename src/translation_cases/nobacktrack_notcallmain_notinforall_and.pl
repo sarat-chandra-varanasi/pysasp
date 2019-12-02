@@ -1,13 +1,11 @@
 
 
 translate(Rule, notcallmain, and, notinforall, Lout) :- 
-          calltype2(X),
-          Rule =  pred(X, notcallmain, _, Head, and(Body), _, _, Domains, Forall, _), Head =.. [Name| Args], append(Args,[ctx], Args1), Headcall =.. [Name|Args1], L1 = [def, space, Headcall, :],
-          (X = main -> preamble(Head,L1, L2) ; L2 = L1), 
-			    Domains = [],
+          Rule =  pred(abstraction, notcallmain, _, Head, and(Body), _, _, Domains, Forall, _), Head =.. [Name| Args], append(Args,[ctx], Args1), Headcall =.. [Name|Args1], L1 = [def, space, Headcall, :],
+          Domains = [],
 			    Forall = [], 
-              add_foralls(Forall,L2, L3,1,Indent1),
-              translate_body_nobacktrack(notcallmain, and, notinforall,  Body,0,Indent1, L3, Lout).
+          add_foralls(Forall,L2, L3,1,Indent1),
+          translate_body_nobacktrack(notcallmain, and, notinforall,  Body,0,Indent1, L3, Lout).
 
 
 translate_body_nobacktrack(notcallmain, and, notinforall, [],_,Indent1,L,Lout) :-
@@ -33,7 +31,7 @@ gen_call(Call, Ctx, Ctxnew, Indent, L, Lout) :-
       
 gen_call(Call, Ctx, Ctxnew, Indent, L, Lout) :-
      parser:not(is_prim(Call)),
-     Call =.. [Name|Args], append(Args, [Ctx], Args1), Call1 =.. [Name|Args1],
+     Call =.. [Name|Args], append(Args, [copy(Ctx)], Args1), Call1 =.. [Name|Args1],
      append(L, [newline, tab(Indent), Ctxnew, space, =, space, Call1], Lout).
 
 map_op("\\=", "!=").

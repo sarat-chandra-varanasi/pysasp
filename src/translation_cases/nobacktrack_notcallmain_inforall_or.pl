@@ -27,6 +27,7 @@ translate_nobacktrack_final(notcallmain, or, inforall, _, _, _, L, Lout) :-
 translate(Rule, notcallmain, or, inforall, Lout) :- 
               Rule =  pred(abstraction, notcallmain, _, Head, or(Body), _, _, Domains, Forall, Dataflow), Head =.. [Name| Args], append(Args,[ctx], Args1), Headcall =.. [Name|Args1], L1 = [def, space, Headcall, :],
                Domains = [],
+               Forall \= [],
                Indent = 1,
                add_backtracking(Domains,Indent,Indent1,L1,L2),
                add_foralls(Forall,Indent1,Indent2,L2,L3),

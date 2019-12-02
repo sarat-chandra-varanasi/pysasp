@@ -1,6 +1,7 @@
 
 :- module(translate, [
-            translate/2
+            translate/2,
+            args_string/2
 
   ]).
 
@@ -24,11 +25,12 @@
 
 translate(Source, _) :-
      %open(Dest, write, Out), set_output(Out),
-     gen_intermediate_prog(Source, _, _, _, Inputs, _, _, _, Rulesfinal1, Values,Inputvalues),
+     gen_intermediate_prog(Source, _, _, Mainid, Inputs, _, _, _, Rulesfinal1, Values,Inputvalues),
      init(L), format(L),
-     translate(domains, Values, L1), format(L1), 
-     translate(inputs, Inputvalues, L2), format(L2),
-     gen_input_calls(Inputs, L3), format(L3),
+     (optimize(true) -> gen_atom_call(Mainid, L1), format(L1) ; true),
+     translate(domains, Values, L2), format(L2), 
+     translate(inputs, Inputvalues, L3), format(L3),
+     gen_input_calls(Inputs, L4), format(L4),
      format([newline]),
      mod_rules(Rulesfinal1, Mod), 
      translate_rules(Mod). 
@@ -116,3 +118,23 @@ gen_input_calls([H|T], L, Lout) :-
       	         newline, tab, tab, "return {'success': True, 'context' : ctx}"], L2),
       gen_input_calls(T, L2, Lout).
 
+gen_atom_call(Mainid, L) :-
+     atom_chars(Mainid, Chars),
+     append(Namechars, ['_', Aritychar], Chars),
+     number_chars(Arity, [Aritychar]),
+     get_vars(Arity, Vars),
+     term_string(atom_, Atomstr),
+     string_concat(Atomstr, Aritychar, Atomcall),
+     term_string(Atom, Atomcall),
+     Functor =.. [Atom|Vars],
+     L1 = [newline, def, space, Functor, :, 
+           newline, tab, "return computation('", Mainid, "',", Vars, ")"],
+     term_string(dualatom_, Dualatomstr),
+     string_concat(Dualatomstr, Aritychar, Dualatomcall),
+     term_string(Dualatom, Dualatomcall),
+     Functorneg =.. [Dualatom|Vars],
+     neg_name(Mainid, Negid),
+     L2 = [newline, def, space, Functorneg, :, 
+           newline, tab, "return computation('", Negid, "',", Vars, ")"],
+     append(L1, L2, L).
+     

@@ -13,8 +13,7 @@ translate_body_nobacktrack(notcallmain, or, notinforall, [H|T],CtxNum,Indent,L,L
                         translate_body_nobacktrack(notcallmain, or, notinforall, T, CtxNum1,Indent1,L4,Lout).
 
 translate(Rule, notcallmain, or, notinforall, Lout) :-
-                        calltype(X),
-                        Rule = pred(X, notcallmain, _, Head, or(Body), _, _, Domains, Forall, _), Head =.. [Name| Args], append(Args,[ctx], Args1), Headcall =.. [Name|Args1], L1 = [def, space, Headcall, :],
+                        Rule = pred(abstraction, notcallmain, _, Head, or(Body), _, _, Domains, Forall, _), Head =.. [Name| Args], append(Args,[ctx], Args1), Headcall =.. [Name|Args1], L1 = [def, space, Headcall, :],
 				Domains = [],
                         add_foralls(Forall,L1, L2,1,Indent1),
                         translate_body_nobacktrack(notcallmain, or, notinforall, Body,0,Indent1,L2,Lout).

@@ -23,7 +23,6 @@ translate_body_nobacktrack_final(callmain, and, inforall, _, L, Lout) :-
 translate_body_nobacktrack(callmain, and, inforall, [],_,_,L,L).
                    
 translate_body_nobacktrack(callmain, and, inforall, [H|T],CtxNum,Indent,L,Lout) :- H = Call, CtxNum1 is CtxNum + 1, ctx_term(CtxNum, _), ctx_term(CtxNum1, CtxNew),
-                     %append(L, [newline, tab(Indent), CtxNew, space, =, space, Call1], L1),
                      gen_call(Call, ctx, CtxNew, Indent, L, L1),
                      Indent1 is Indent + 1,
                      append(L1, [newline, tab(Indent), if, space, CtxNew,"['success']",:, newline, tab(Indent1), ctx, space, =, space, CtxNew, "['context']",
