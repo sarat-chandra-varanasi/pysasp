@@ -16,6 +16,10 @@ To save the file, use IO-redirection of bash environment
 
 pysasp <input_file> >  <output_file>
 
+For optimized version:
+
+pysasp <input_file> -o  > < output_file>
+
 Info
 ----
 <input_file> is an Answer Set Program in a particular format
