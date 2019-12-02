@@ -3,6 +3,8 @@
             init/1
   ]).
 
+:- use_module(main).
+
 init(Lout) :-
   L =[newline, "import copy",
   	      newline, "copy = copy.deepcopy",
@@ -20,5 +22,17 @@ init(Lout) :-
           newline, tab(2), "i += 1",
           newline, tab, "s += str(args[i]) + ')'",
           newline, tab, "return s"],
-  (optimize(true) -> append(L, [newline, "nogood = {}"], Lout) ; Lout = L).
+  (optimize(true) -> opt_init(L1), append(L, L1, Lout) ; Lout = L).
   	      
+
+opt_init([newline, "nogood = {}", newline, "inconsistent = {}", newline, "nogooddual = {}", 
+          newline, "def is_inconsistent_property(atom, ctx, property):",
+          newline, tab, "for term in ctx:",
+          newline, tab, tab, "if (atom,term,property) in inconsistent:",
+          newline, tab, tab, tab, "return True",
+          newline, tab, "return False",
+          newline, "def is_inconsistent(atom, ctx):",
+          newline, tab, "for term in ctx:",
+          newline, tab, tab, "if (atom, term, str(ctx)) in inconsistent:",
+          newline, tab, tab, tab, "return True",
+          newline, tab, "return False"]).
