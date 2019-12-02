@@ -5,7 +5,13 @@
                       gen_intermediate_prog/11,
                       or/3,
                       and/3,
-                      subexprs/2
+                      subexprs/2,
+                      id_arity/2,
+                      main_pred_id/1,
+                      callgraph/1,
+                      callgraph1/1,
+                      is_prim/1,
+                      cross/3
                   ]).
 
 
@@ -15,6 +21,10 @@
 :- use_module(main).
 :- dynamic domain/1.
 :- dynamic main_pred/1.        
+:- dynamic main_pred_id/1.
+:- dynamic callgraph/1.
+:- dynamic callgraph1/1.
+
 
 :- discontiguous parser:domains/3.
 :- discontiguous parser:drop_domains/3.
@@ -558,8 +568,6 @@ reach(X, Y, Graph, Visited) :-
 cycle(Graph) :- reach(X, Y, Graph), reach(Y, X, Graph).
 
 invalid(Graph) :- member(edge(X, Y), Graph), member(edge(Y, X), Graph).
-
-
 
 
 
@@ -1169,14 +1177,13 @@ infer_types([H|T], Ty, Types) :-
           assign_types(Flow, Vars, Ty, Ty1),
           infer_types(T, Ty1, Types).
 
-gen_intermediate_prog(Source, Rulesfmt, Domains, Mainid, Inputs_n, Graph, Graph1, Flow1, Rulesfinal3, Values, Inputvalues) :-   
+gen_intermediate_prog(Source, Rulesfmt, Domains, Mainid, Inputs_n, Graph, Graph1, Flow1, Rulesfinal4, Values, Inputvalues) :-   
        io:load_source_files([Source], [], S, 0, _), 
        domains(S, Domains),
        inputs(S, Inputs),
        names(S, Names),
        main_pred(S, Main),
        main_pred_arity(Main, S, Arity),
-
        functor_arities(Domains, S, Domains_n),
        functor_arities(Inputs, S, Inputs_n),
        atom_string(Main, Mainstr),
@@ -1211,10 +1218,16 @@ gen_intermediate_prog(Source, Rulesfmt, Domains, Mainid, Inputs_n, Graph, Graph1
        assign_domain_types(Domains_n, Values),
        infer_types(Rulesfinal2,_),
        infertypes_simple(Mainid, Rulesfmt),
-       maplist(rewrite_disjunct, Rulesfinal2, Rulesfinal3).
+       remove_exact_match_dual_mapper(Mainid, Rulesfinal2, Rulesfinal3),
+       maplist(rewrite_disjunct, Rulesfinal3, Rulesfinal4),
+       assert(main_pred_id(Mainid)),
+       assert(callgraph(Graph)),
+       assert(callgraph1(Graph1)).
 
     
-cleanup :- retractall(main_pred(_)), retractall(domain(_)), retractall(id(_)), retractall(rule_ident(_)).
+cleanup :- retractall(main_pred(_)), retractall(domain(_)), retractall(id(_)), retractall(rule_ident(_,_)), assert(id(0)),
+           retractall(typeof(_,_)), retractall(domain_type(_,_)), retractall(main_pred_id(_)), retractall(callgraph(_)),
+           retractall(callgraph1(_)).
 
 
 connective_of(and(_), and).
@@ -1279,3 +1292,82 @@ assign_vartypes([H|T],Functor,Vartypes) :-
         assert(typeof(Index,Type)),
         assign_vartypes(T,Functor,Vartypes). 
 
+name_of(Functor, Name) :-
+      Functor =.. [Name|_].
+
+has_in_body((Id, Rule)) :-
+      Rule = pred(_,_,_,_,Goals,_,_,_,_,_),
+      Goals =.. [_|Body1],
+      Body1 = [Body],
+      maplist(name_of, Body, Names),
+      member(Id, Names).
+
+
+goals_with_id(Id, Goals, Goalsout) :-
+         goals_with_id(Id, Goals, [], Goalsout).
+
+goals_with_id(_, [], G, G).
+
+goals_with_id(Id, [H|T], G, Goalsout) :- 
+        H =.. [Id|_],
+        append(G, [H], G1),
+        goals_with_id(Id, T, G1, Goalsout).
+
+goals_with_id(Id, [_|T], G, Goalsout) :-
+         goals_with_id(Id, T, G, Goalsout).
+
+
+id_arity(Id, Arity) :-
+      atom_chars(Id, Chars),
+      append(_,['_',Aritychar],Chars),
+      number_chars(Arity, [Aritychar]).
+
+has_exact_match(H, Arity, Flow) :-
+      H =.. [_|Args],
+      length(Args,Arity),
+      args_match(Args,Arity,Flow).
+
+
+args_match(Args,Arity,Flow) :-
+       args_match(Args,1,Arity,Flow).
+
+
+args_match([],I,Arity,_) :-
+          I is Arity + 1.
+
+args_match([H|T], I, Arity, Flow) :-
+         member((H,_,I),Flow),
+         I1 is I + 1,
+         args_match(T, I1, Arity, Flow).
+
+
+goals_with_exact_match(Dualgoals, Arity, Flow, Exactmatchduals) :-
+          goals_with_exact_match(Dualgoals, Arity, Flow, [], Exactmatchduals).
+
+
+goals_with_exact_match([],_,_,E,E).
+
+
+goals_with_exact_match([H|T], Arity, Flow, E, Exactmatchduals) :-
+             (has_exact_match(H, Arity, Flow) -> append(E, [H], E1) ; E1 = E),
+             goals_with_exact_match(T, Arity, Flow, E1, Exactmatchduals).
+
+
+remove_exact_match_dual_mapper(Main, Rules, Rulesout) :-
+            cross(Main, Rules, Cross),
+            maplist(remove_exact_match_dual, Cross, Rulesout).
+
+remove_exact_match_dual((Main, Rule), Ruleout) :-
+     Rule = pred(A,B,C,D,Goals,E,F,G,H,Flow),
+     Goals =.. [Connective|Body1],
+     Body1 = [Body],
+     neg_name(Main, Dual),
+     id_arity(Main, Arity), 
+     goals_with_id(Dual, Body, Dualgoals),
+     goals_with_exact_match(Dualgoals, Arity, Flow, Exactmatchduals),
+     lst_difference(Body, Exactmatchduals, Body2),
+     Goalsout =.. [Connective|[Body2]],
+     Ruleout = pred(A,B,C,D,Goalsout,E,F,G,H,Flow).
+
+
+%rules([pred(main,callmain,color_2,color_2(x,c),and([not_othercolor_2(x,c),not_conflict_2(x,c)]),[],[x(node_1),c(col_1)],[],[],[ (x,x_1,1), (c,c_1,2)]),pred(abstraction,callmain,othercolor_2,othercolor_2(x,c),and([primitive_1(c\=c1),color_2(x,c1)]),[],[x(node_1),c(col_1),c1(col_1)],[c1(col_1)],[],[ (x,x_1,1), (c,c_1,2)]),pred(abstraction,callmain,conflict_2,conflict_2(x,c),and([primitive_2(x\=y),edge_2(x,y),color_2(x,c),color_2(y,c)]),[],[x(node_1),c(col_1),y(node_1)],[y(node_1)],[],[ (x,x_1,1), (c,c_1,2)]),pred(dual,callmain,not_color_2,not_color_2(x,c),or([othercolor_2(x,c),conflict_2(x,c)]),[],[x(node_1),c(col_1)],[],[],[ (x,x_1,1), (c,c_1,2)]),pred(abstraction,callmain,not_othercolor_2,not_othercolor_2(x,c),or([not_primitive_1(c\=c1),not_color_2(x,c1)]),[],[x(node_1),c(col_1),c1(col_1)],[],[c1(col_1)],[ (x,x_1,1), (c,c_1,2)]),pred(abstraction,callmain,not_conflict_2,not_conflict_2(x,c),or([not_primitive_2(x\=y),not_edge_2(x,y),not_color_2(x,c),not_color_2(y,c)]),[],[x(node_1),c(col_1),y(node_1)],[],[y(node_1)],[ (x,x_1,1), (c,c_1,2)])]).
