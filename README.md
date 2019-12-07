@@ -20,6 +20,10 @@ For optimized version:
 
 pysasp <input_file> -o  > < output_file>
 
+For a sample of how input file must be specified, 
+see examples/color.lp
+
+
 Info
 ----
 <input_file> is an Answer Set Program in a particular format
