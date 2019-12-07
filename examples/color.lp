@@ -1,5 +1,8 @@
+%domains are annotated with using domain/1
 domain(node).
 domain(col).
+
+%color/2 is the main predicate from where the computation starts
 main(color).
 
 col(green).
@@ -10,7 +13,7 @@ node(c).
 node(a).
 node(b).
 
-
+%edge/2 represents the input graph
 input(edge).
 
 edge(a, b).
