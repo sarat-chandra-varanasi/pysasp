@@ -33,7 +33,7 @@ preamble(Head,L1,Lout) :-
        Head =.. [Name|Args], append(L1, [newline, tab, if, space, computation, "('", Name, "',", Args, ")", space, in, space, ctx, :, newline, tab(2), "return {'success': True, 'context'	: ctx}",
 	                                newline, tab, ctx, "[computation('",Name, "',", Args, ")] = True"],L2),
        args_string(Args, Argsstring),
-       (optimize(true) -> append(L2, [newline, tab, "if str(ctx) in nogood or is_inconsistent(atom_2(", Argsstring, "),ctx):", newline, tab(2), "return {'success': False, 'context': ctx}"], Lout) ; Lout = L2).
+       (optimize(true) -> append(L2, [newline, tab, "if str(ctx) in nogood or is_inconsistent(atom(", Argsstring, "),ctx):", newline, tab(2), "return {'success': False, 'context': ctx}"], Lout) ; Lout = L2).
  
 add_backtracking([],Indent,Indent,L,L). 
 add_backtracking([H|T], Indent, Indent2, L ,L2) :- H =.. [Name,Dom], Indent1 is Indent + 1, append(L, [newline, tab(Indent),for,space, Name,space, in,space, Dom, :], L1), 
