@@ -15,9 +15,9 @@ translate_body_nobacktrack_helper(notcallmain, or, inforall, [H|T],CtxNum,Indent
                     Indent2 is Indent1 + 1, 
                     append(L1, [newline, tab(Indent1), if, space, CtxNew,"['success']",:, newline, tab(Indent2), ctx, space, =, space, CtxNew, "['context']"], L2),
                     append(L2, [newline, tab(Indent1), else, :], L3),
-                    (T \= [] -> translate_body_nobacktrack_helper(notcallmain, or, inforall,T,CtxNum1,Indent,Indent2,L3,Lout) ; 
-                            optimize(true) -> append(L3,[newline, tab(Indent2), "nogood[str(ctx)] = True", newline, tab(Indent2), "return {'success': False, 'context' : ctx}"],Lout) ;
-                             append(L3,[newline, tab(Indent2), "return {'success': False, 'context' : ctx}"],Lout)). 
+                    (T \= [] -> translate_body_nobacktrack_helper(notcallmain, or, inforall,T,CtxNum1,Indent,Indent2,L3,Lout) ;  append(L3,[newline, tab(Indent2), "return {'success': False, 'context' : ctx}"],Lout)).
+                            %optimize(true) -> append(L3,[newline, tab(Indent2), "nogood[str(ctx)] = True", newline, tab(Indent2), "return {'success': False, 'context' : ctx}"],Lout) ;
+                            % append(L3,[newline, tab(Indent2), "return {'success': False, 'context' : ctx}"],Lout)). 
                     
 
 translate_nobacktrack_final(notcallmain, or, inforall, _, _, _, L, Lout) :-

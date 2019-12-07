@@ -4,8 +4,8 @@ translate(Rule, notcallmain, and, notinforall, Lout) :-
           Rule =  pred(abstraction, notcallmain, _, Head, and(Body), _, _, Domains, Forall, _), Head =.. [Name| Args], append(Args,[ctx], Args1), Headcall =.. [Name|Args1], L1 = [def, space, Headcall, :],
           Domains = [],
 			    Forall = [], 
-          add_foralls(Forall,L2, L3,1,Indent1),
-          translate_body_nobacktrack(notcallmain, and, notinforall,  Body,0,Indent1, L3, Lout).
+          add_foralls(Forall,L1, L2,1,Indent1),
+          translate_body_nobacktrack(notcallmain, and, notinforall,  Body,0,Indent1, L2, Lout).
 
 
 translate_body_nobacktrack(notcallmain, and, notinforall, [],_,Indent1,L,Lout) :-

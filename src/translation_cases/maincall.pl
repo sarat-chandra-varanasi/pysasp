@@ -1,6 +1,6 @@
 
 
-translate(Rule, callmain, and, notinforall, L) :-
+translate(Rule, Callmain, and, notinforall, L) :-
     Rule = pred(main, _, A, Head, Body, B, C, Domains, _, Dataflow),
     Rulemod = pred(main, notcallmain, A, Head, Body, B, C, Domains, [], Dataflow),
     (Domains \= [] -> translate_main_backtrack(Rulemod, L) ; translate_main_nobacktrack(Rulemod, L)).

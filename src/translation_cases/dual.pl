@@ -9,7 +9,7 @@ translate(Rule, _, or, notinforall, Lout) :-
       append(L1, [newline, tab, if, space, "computation('", Negname, "',", Args, ')',  space, in, space, ctx, :,
       	          newline, tab(2), "return {'success' : False, 'context' : ctx}" ], L2),
       args_string(Args, Argsstring),
-      (optimize(true) -> append(L2,[newline, tab, "ctx_check = copy(ctx)", newline, tab, "ctx_check[dualatom_2(", Argsstring, ")] = True",
+      (optimize(true) -> append(L2,[newline, tab, "ctx_check = copy(ctx)", newline, tab, "ctx_check[dualatom(", Argsstring, ")] = True",
                                    newline, tab, "if str(ctx_check) in nogooddual:",
                                    newline, tab, tab, "return {'success' : False, 'context' : ctx}",
                                    newline, tab, "if str(ctx) in nogood:",
@@ -19,7 +19,7 @@ translate(Rule, _, or, notinforall, Lout) :-
 translate_body_nobacktrack(dual, Headargs, [],_,Indent,L,Lout) :-  
            args_string(Headargs, Headargsstring),
           (optimize(true) -> append(L, [newline, tab(Indent), "ctx_dual = copy(ctx)", 
-                                       newline, tab(Indent), "ctx_dual[dualatom_2(", Headargsstring, ")] = True",
+                                       newline, tab(Indent), "ctx_dual[dualatom(", Headargsstring, ")] = True",
                                        newline, tab(Indent), "nogooddual[str(ctx_dual)] = True"], L1) ; L1 = L),
           append(L1, [newline, tab(Indent), "return {'success': False, 'context' : ctx}"], Lout).
 
@@ -48,7 +48,7 @@ gen_call_opt(Property, Call, Ctx, Ctxnew, Indent, L, Lout) :-
      append(Args, [copy(Ctx)], Args1), Call1 =.. [Name|Args1],
      args_string(Args, Argsstring),
      neg_name(Property, Propertyneg),
-     append(L, [newline, tab(Indent), Ctxnew, space, =, space, "{'success' : False, 'context' : ctx, 'trivial' : True} if is_inconsistent_property(atom_2(", Argsstring, "), ctx,\"", Propertyneg, "\") else ", Call1], Lout). 
+     append(L, [newline, tab(Indent), Ctxnew, space, =, space, "{'success' : False, 'context' : ctx, 'trivial' : True} if is_inconsistent_property(atom(", Argsstring, "), ctx,\"", Propertyneg, "\") else ", Call1], Lout). 
      
 args_string(Args, String) :-
       args_string(Args, "", String).

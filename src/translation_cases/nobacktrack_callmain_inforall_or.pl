@@ -24,8 +24,8 @@ translate_body_nobacktrack_helper(callmain, or, inforall, Head, Body, Forall, He
                                  args_string(Dualargs, Dualsargsstring),
                                  Head =.. [Name |_], 
                                  neg_name(Name, Property),
-                                 append(L4, [newline, tab(Indent2), "inconsistent[atom_2(", Headargsstring1, "), atom_2(", Dualsargsstring, "),\"", Property, "\"] = True"], L5),
-                                 append(L5, [newline, tab(Indent2), "inconsistent[atom_2(", Dualsargsstring, "), atom_2(", Headargsstring1, "),\"", Property, "\"] = True"], L6)
+                                 append(L4, [newline, tab(Indent2), "inconsistent[atom(", Headargsstring1, "), atom(", Dualsargsstring, "),\"", Property, "\"] = True"], L5),
+                                 append(L5, [newline, tab(Indent2), "inconsistent[atom(", Dualsargsstring, "), atom(", Headargsstring1, "),\"", Property, "\"] = True"], L6)
                                  ; 
                                  L6 = L4
                     ),
@@ -40,10 +40,10 @@ translate_body_nobacktrack_helper(callmain, or, inforall, Head, Body, Forall, He
                                  vars_replacedvars(Headargs, Headargs1),
                                  args_string(Headargs, Headargsstring),
                                  args_string(Headargs1, Headargsstring1),
-                                 append(L9, [newline, tab(Indent2), "inconsistent[atom_2(", Headargsstring, "), atom_2(", Headargsstring1, "), str(ctx)] = True"], L10),
-                                 append(L10, [newline, tab(Indent2), "inconsistent[atom_2(", Headargsstring1, "), atom_2(", Headargsstring, "), str(ctx)] = True"], L11),
-                                 append(L11,[newline, tab(Indent2), "return {'success': False, 'context' : ", CtxNew, "['context']}"],Lout)
-                                 ; append(L6,[newline, tab(Indent2), "return {'success': False, 'context' : ", CtxNew, "['context']}"],Lout)). 
+                                 append(L9, [newline, tab(Indent2), "inconsistent[atom(", Headargsstring, "), atom(", Headargsstring1, "), str(ctx)] = True"], L10),
+                                 append(L10, [newline, tab(Indent2), "inconsistent[atom(", Headargsstring1, "), atom(", Headargsstring, "), str(ctx)] = True"], L11),
+                                 append(L11,[newline, tab(Indent2), "return {'success': False, 'context' : ", CtxNew, "}"],Lout)
+                                 ; append(L6,[newline, tab(Indent2), "return {'success': False, 'context' : ", CtxNew, "}"],Lout)). 
                     
 
 translate_body_nobacktrack_final(callmain , or, inforall, [],_,Indent,_, L, Lout) :- 
@@ -114,13 +114,15 @@ gen_inconsistent_tuples(Head, Headargsstring, Argsstrings, Forall, Indent, Lout)
 gen_inconsistent_tuples(Head, Headargsstring, Argsstrings, [], Indent, L, Lout) :-
           Head =.. [Name |_], 
           neg_name(Name, Property),
-          gen_inconsistent_tuples_helper(Property, Headargsstring, Argsstrings, Indent, L, Lout).
+          Indent1 is Indent + 1,
+          gen_if_checks(Indent, Headargsstring, Argsstrings, L, L1),
+          gen_inconsistent_tuples_helper(Property, Headargsstring, Argsstrings, Indent1, L1, Lout).
 
 gen_inconsistent_tuples_helper(_, _, [], _,  L, L).
 
 gen_inconsistent_tuples_helper(Property, Headargsstring, [H|T], Indent, L, Lout) :-
-          append(L, [newline, tab(Indent), "inconsistent[atom_2(", Headargsstring, "),atom_2(", H, "),\"", Property, "\"] = True"], L1),
-          append(L1, [newline, tab(Indent), "inconsistent[atom_2(", H, "),atom_2(", Headargsstring, "),\"", Property, "\"] = True"], L2),
+          append(L, [newline, tab(Indent), "inconsistent[atom(", Headargsstring, "),atom(", H, "),\"", Property, "\"] = True"], L1),
+          append(L1, [newline, tab(Indent), "inconsistent[atom(", H, "),atom(", Headargsstring, "),\"", Property, "\"] = True"], L2),
           gen_inconsistent_tuples_helper(Property, Headargsstring, T, Indent, L2, Lout).
 
 gen_inconsistent_tuples(Head, Headargsstring, Argsstrings, [H|T], Indent, L, Lout) :-
@@ -128,3 +130,14 @@ gen_inconsistent_tuples(Head, Headargsstring, Argsstrings, [H|T], Indent, L, Lou
           append(L, [newline, tab(Indent), for, space, Var, space,  in, space, Domain, :], L1),
           Indent1 is Indent + 1,
           gen_inconsistent_tuples(Head, Headargsstring, Argsstrings, T, Indent1, L1, Lout).
+
+
+
+gen_if_checks(_, _, [], L, L).
+
+
+gen_if_checks(Indent, Headargsstring, [H|T], L, Lout) :-
+           append(L, [newline, tab(Indent), if, space, "atom(", Headargsstring, ") != atom(", H, "):"], L1),
+           (T = [] -> Lout = L1 ; append(L1, [space, and, space], L2), gen_if_checks(Indent, Headargsstring, T, L2, Lout)).
+
+      
