@@ -9,4 +9,4 @@ main(max).
 
 dominated(X) :- num(X), num(Y), Y > X.
 
-max(X) :- not dominated(X).
+max(X) :- num(X), not dominated(X).
